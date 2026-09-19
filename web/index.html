@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071411" />
+    <title>TenantVault — Zero-trust RAG</title>
+    <link rel="stylesheet" href="/assets/styles.css" />
+  </head>
+  <body>
+    <div class="ambient one"></div><div class="ambient two"></div>
+    <main>
+      <header class="topbar">
+        <a class="brand" href="/"><span class="mark">◇</span> TenantVault</a>
+        <div class="topbar-right"><span class="live-dot"></span> Isolation controls active <span class="pill">zt-rag / v1</span><button id="guide-toggle" class="guide-trigger" type="button">Present this demo <span>↗</span></button></div>
+      </header>
+
+      <section class="hero">
+        <div>
+          <p class="eyebrow">MULTI-TENANT RAG · DATABASE-ENFORCED</p>
+          <h1>Make data boundaries<br /><em>provable.</em></h1>
+          <p class="lede">Ask across your tenant's private knowledge. Every retrieval is fenced by a signed identity, PostgreSQL row-level security, and a verifiable isolation receipt.</p>
+        </div>
+        <aside class="trust-card">
+          <div class="trust-title"><span class="shield">✦</span> Retrieval trust chain</div>
+          <ol>
+            <li><b>01</b> Verified tenant claim</li>
+            <li><b>02</b> Transaction-local RLS context</li>
+            <li><b>03</b> Tenant-key encrypted sources</li>
+            <li><b>04</b> Signed evidence receipt</li>
+          </ol>
+        </aside>
+      </section>
+
+      <section class="workbench">
+        <div class="panel chat-panel">
+          <div class="panel-heading">
+            <div><p class="eyebrow">SECURE WORKSPACE</p><h2>Tenant-grounded answer</h2></div>
+            <label class="tenant-select">Act as <select id="tenant"><option value="northstar">Northstar Health</option><option value="acme">Acme Robotics</option></select></label>
+          </div>
+          <div id="identity" class="identity" data-guide="identity"><span class="tiny-shield">◈</span><span>Signing in to the tenant workspace…</span></div>
+          <div class="question-chips">
+            <button data-question="Who owns the cardiac escalation review?">Cardiac escalation owner</button>
+            <button data-question="What is the flight-control canary?">Try an out-of-tenant canary</button>
+          </div>
+          <form id="query-form">
+            <label for="question">Ask your knowledge base</label>
+            <div class="prompt-row"><input id="question" required value="Who owns the cardiac escalation review?" maxlength="2000" /><button type="submit">Retrieve <span>↗</span></button></div>
+          </form>
+          <div id="answer" class="answer empty"><span class="spark">✧</span><p>Your answer will include only evidence visible to this signed tenant.</p></div>
+          <div id="sources" class="sources"></div>
+        </div>
+
+        <div class="side-stack">
+          <div class="panel receipt-panel" data-guide="receipt">
+            <div class="panel-heading"><div><p class="eyebrow">VERIFIABLE OUTPUT</p><h2>Isolation receipt</h2></div><span id="receipt-state" class="status neutral">WAITING</span></div>
+            <div id="receipt" class="receipt-empty">Run a retrieval to mint a signed, tenant-scoped receipt.</div>
+          </div>
+          <div class="panel challenge-panel">
+            <p class="eyebrow">RED-TEAM CHECK</p>
+            <h2>Attempt a boundary escape.</h2>
+            <p>Search for the other demo tenant’s deliberately sensitive canary. The result must be empty.</p>
+            <button id="probe" class="secondary" data-guide="probe">Run isolation challenge <span>→</span></button>
+            <div id="probe-result" class="probe-result" aria-live="polite"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="control-strip">
+        <div data-guide="identity-control"><span>IDENTITY</span><b>JWT tenant claim only</b></div>
+        <div data-guide="rls"><span>VECTOR STORE</span><b>FORCE RLS · pgvector</b></div>
+        <div><span>CONTENT</span><b>AES-256-GCM per tenant</b></div>
+        <div><span>AUDIT</span><b>Hash-chained receipts</b></div>
+      </section>
+      <footer>TenantVault is a security architecture demo. The isolation policy is enforced by the database, not merely promised by the model.</footer>
+    </main>
+    <aside id="guide-popup" class="guide-popup" hidden aria-live="polite" aria-label="Presenter walkthrough">
+      <div class="guide-progress"><span id="guide-count">01 / 06</span><button id="guide-close" type="button" aria-label="Close walkthrough">×</button></div>
+      <p id="guide-kicker" class="eyebrow">OPENING</p>
+      <h3 id="guide-title">This is not a tenant filter.</h3>
+      <p id="guide-description"></p>
+      <div class="speaker-cue"><span>Say this</span><p id="guide-script"></p></div>
+      <div class="guide-actions"><button id="guide-back" class="guide-back" type="button">Back</button><button id="guide-next" class="guide-next" type="button">Next point <span>→</span></button></div>
+    </aside>
+    <div id="guide-marker" class="guide-marker" hidden aria-hidden="true"><span>✦</span><i></i></div>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
