@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_DB: tenantvault
+      POSTGRES_USER: tenantvault_owner
+      POSTGRES_PASSWORD: local-dev-only
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations/001_zero_trust.sql:/docker-entrypoint-initdb.d/001_zero_trust.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tenantvault_owner -d tenantvault"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    environment:
+      STORE_MODE: postgres
+      DATABASE_URL: postgresql://tenantvault_api:local-dev-only@postgres:5432/tenantvault
+      TOKEN_SIGNING_SECRET: local-token-secret-change-before-use-123456789
+      TENANT_KEY_ROOT: local-key-root-change-before-use-123456789012
+      RECEIPT_SIGNING_SECRET: local-receipt-secret-change-before-use-123456
+      DEMO_MODE: "true"
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
