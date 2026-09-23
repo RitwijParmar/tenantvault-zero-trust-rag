@@ -9,7 +9,9 @@ silent data-leak path?” It ships a polished browser demo, a FastAPI service,
 PostgreSQL + pgvector schema, hard row-level policies, encrypted sources, and
 tests that actively try to breach the tenant fence.
 
-> **Live demo:** [TenantVault on Cloud Run](https://tenantvault-ciiiagnzaq-uc.a.run.app) · synthetic data only · click **Present this demo** for the guided walkthrough.
+> **Demo:** run the synthetic-data experience locally with the quickstart below
+> and click **Present this demo** for the guided walkthrough. Cloud Run and
+> Cloud SQL deployment assets remain available under `infra/gcp/`.
 
 ## The design in one glance
 
