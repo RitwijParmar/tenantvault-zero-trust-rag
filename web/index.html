@@ -32,6 +32,14 @@
         </aside>
       </section>
 
+      <section class="evaluation-card" data-guide="scorecard">
+        <div class="evaluation-intro"><p class="eyebrow">ADVERSARIAL EVALUATION · SYNTHETIC LAB</p><h2>Measure the missing-filter failure.</h2><p>Same attack corpus, two retrieval paths. The baseline is intentionally unsafe; TenantVault is tenant-scoped.</p></div>
+        <div class="evaluation-metric unsafe"><b>132 / 132</b><span>foreign canaries selected by a naïve global retriever</span></div>
+        <div class="evaluation-metric safe"><b>0 / 132</b><span>foreign sources returned by TenantVault</span></div>
+        <div class="evaluation-metric proof"><b>132 / 132</b><span>cross-tenant ciphertext replays blocked</span></div>
+        <p class="evaluation-footnote">12 tenants · 576 synthetic documents · deterministic fault injection</p>
+      </section>
+
       <section class="workbench">
         <div class="panel chat-panel">
           <div class="panel-heading">

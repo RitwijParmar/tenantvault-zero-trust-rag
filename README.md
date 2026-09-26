@@ -86,6 +86,28 @@ See [the Cloud Run deployment guide](infra/gcp/README.md) for what it creates, s
 
 Click **Present this demo** in the web UI. It places a live marker beside each control and gives an unforced, conversational talk track. The complete 4–5 minute version, including the red-team moment and likely interviewer follow-up answers, is in [the walkthrough script](docs/demo_walkthrough.md).
 
+## Quantified fault-injection result
+
+The project does not just count unit tests. It asks a concrete question: if a
+developer accidentally removes the tenant condition from vector retrieval, how
+often would the wrong source be selected?
+
+In a deterministic **12-tenant / 576-document** synthetic corpus, an unsafe
+global-vector baseline selected the target foreign canary in **132/132**
+cross-tenant attack paths. TenantVault returned **0/132** foreign sources,
+blocked **132/132** cross-tenant ciphertext replays, and detected **12/12**
+receipt-tampering attempts. See the [recorded scorecard](artifacts/fault_injection_scorecard.json)
+and [evaluation method](docs/adversarial_evaluation.md).
+
+```bash
+python scripts/fault_injection_benchmark.py \
+  --tenants 12 --documents-per-tenant 48 \
+  --output artifacts/fault_injection_scorecard.json
+```
+
+This measures an explicit local synthetic fault model—not production traffic,
+customer impact, or Cloud Run performance.
+
 ## Verify the security claim
 
 ```bash
@@ -103,7 +125,7 @@ The suite verifies all of the following:
 
 ## Evidence, not just architecture claims
 
-- **8 automated security checks** run in GitHub Actions: canary isolation,
+- **9 automated security checks** run in GitHub Actions: canary isolation,
   tenant-bound encryption, receipt tampering, API tenant override rejection,
   security headers, and database-policy assertions.
 - **Repeatable black-box evaluator:** run the following against a deployment to

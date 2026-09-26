@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "scope": "Deterministic local synthetic fault injection. It compares retrieval-boundary behavior, not PostgreSQL throughput, production traffic, or business impact.",
+  "configuration": {
+    "tenants": 12,
+    "documents_per_tenant": 48,
+    "total_documents": 576,
+    "cross_tenant_attack_pairs": 132
+  },
+  "naive_global_vector_baseline": {
+    "foreign_canaries_selected": 132,
+    "attack_pairs": 132,
+    "selection_rate": 1.0,
+    "meaning": "A missing tenant filter selected the target foreign canary as top result."
+  },
+  "tenantvault_tenant_scoped_retrieval": {
+    "foreign_sources_returned": 0,
+    "attack_pairs": 132,
+    "exposure_rate": 0.0
+  },
+  "tenant_bound_encryption": {
+    "foreign_ciphertext_replays_blocked": 132,
+    "attempts": 132,
+    "block_rate": 1.0
+  },
+  "signed_receipts": {
+    "tenant_tampering_detected": 12,
+    "attempts": 12,
+    "detection_rate": 1.0
+  },
+  "passed": true
+}
