@@ -9,7 +9,9 @@ silent data-leak path?” It ships a polished browser demo, a FastAPI service,
 PostgreSQL + pgvector schema, hard row-level policies, encrypted sources, and
 tests that actively try to breach the tenant fence.
 
-> **Live demo:** [TenantVault on Cloud Run](https://tenantvault-ciiiagnzaq-uc.a.run.app) · synthetic data only · click **Present this demo** for the guided walkthrough.
+> **Demo:** run the synthetic-data experience locally with the quickstart below
+> and click **Present this demo** for the guided walkthrough. Cloud Run and
+> Cloud SQL deployment assets remain available under `infra/gcp/`.
 
 ## The design in one glance
 
@@ -107,6 +109,11 @@ The suite verifies all of the following:
 - **Repeatable black-box evaluator:** run the following against a deployment to
   record normal retrieval success, reciprocal canary exposures, boundary status
   codes, and end-to-end p50/p95 latency in a JSON artifact.
+- **Recorded local baseline:** the included [synthetic control result](artifacts/local_synthetic_isolation_baseline.json)
+  passed **100/100** attempts (50 signed retrievals and 50 reciprocal canary
+  probes), observed **0** canary exposures, and rejected header/body tenant
+  overrides with HTTP **400/422**. It is evidence of the demo control path,
+  not a Cloud Run performance or production-scale claim.
 
 ```bash
 python scripts/measure_live_isolation.py \
