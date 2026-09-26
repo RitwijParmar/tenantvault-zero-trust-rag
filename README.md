@@ -1,13 +1,13 @@
-# TenantVault
+# BoundaryLab
 
-**A zero-trust, multi-tenant RAG reference project where a model cannot read a
-different tenant's vectors—even if application code makes a filtering mistake.**
+**A policy-as-code release gate for multi-tenant RAG. It attests that an AI
+deployment still honors each tenant boundary before that release moves forward.**
 
-TenantVault is designed to be a portfolio-grade answer to a real enterprise AI
-problem: “How do we give every customer their own AI copilot without creating a
-silent data-leak path?” It ships a polished browser demo, a FastAPI service,
-PostgreSQL + pgvector schema, hard row-level policies, encrypted sources, and
-tests that actively try to breach the tenant fence.
+BoundaryLab separates the *control plane* from the *TenantVault data plane*.
+TenantVault provides signed identity, PostgreSQL + pgvector row-level policies,
+tenant-bound encryption, and receipts. BoundaryLab loads reviewed tenant
+contracts, runs signed isolation attestations, and fail-closes a tenant workspace
+if its contract no longer holds.
 
 > **Demo:** run the synthetic-data experience locally with the quickstart below
 > and click **Present this demo** for the guided walkthrough. Cloud Run and
@@ -86,27 +86,30 @@ See [the Cloud Run deployment guide](infra/gcp/README.md) for what it creates, s
 
 Click **Present this demo** in the web UI. It places a live marker beside each control and gives an unforced, conversational talk track. The complete 4–5 minute version, including the red-team moment and likely interviewer follow-up answers, is in [the walkthrough script](docs/demo_walkthrough.md).
 
-## Quantified fault-injection result
+## Release verification workflow
 
-The project does not just count unit tests. It asks a concrete question: if a
-developer accidentally removes the tenant condition from vector retrieval, how
-often would the wrong source be selected?
-
-In a deterministic **12-tenant / 576-document** synthetic corpus, an unsafe
-global-vector baseline selected the target foreign canary in **132/132**
-cross-tenant attack paths. TenantVault returned **0/132** foreign sources,
-blocked **132/132** cross-tenant ciphertext replays, and detected **12/12**
-receipt-tampering attempts. See the [recorded scorecard](artifacts/fault_injection_scorecard.json)
-and [evaluation method](docs/adversarial_evaluation.md).
-
-```bash
-python scripts/fault_injection_benchmark.py \
-  --tenants 12 --documents-per-tenant 48 \
-  --output artifacts/fault_injection_scorecard.json
+```mermaid
+flowchart LR
+  C[Reviewed tenant contract] --> D[Zero-trust RAG data plane]
+  D --> A[Signed isolation attestation]
+  A -->|pass| P[Candidate is eligible for promotion]
+  A -->|fail| Q[Quarantine affected tenant]
 ```
 
-This measures an explicit local synthetic fault model—not production traffic,
-customer impact, or Cloud Run performance.
+The release verifier exercises a deployed candidate over HTTP. It rejects both
+caller-controlled tenant overrides, requests a signed attestation for each demo
+tenant, and verifies that every tenant remains active under a declared policy
+version. It exits nonzero on any failure, making it suitable for a Cloud Run Job
+or CI promotion gate.
+
+```bash
+make verify-release URL=https://candidate-service.run.app
+```
+
+See [the control-plane design](docs/control_plane.md) and the runnable
+[release verifier](src/tenantvault/release_verifier.py). The project includes a
+synthetic fault-injection harness as a regression test, but it is no longer the
+headline or a claim about customer impact.
 
 ## Verify the security claim
 

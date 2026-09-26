@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "release_gate": {
+    "required_controls": [
+      "signed_tenant_claim",
+      "postgres_force_rls",
+      "tenant_bound_aes_gcm",
+      "signed_isolation_receipt"
+    ],
+    "quarantine_on_failed_attestation": true
+  },
+  "contracts": [
+    {
+      "tenant_id": "11111111-1111-1111-1111-111111111111",
+      "policy_version": "northstar/2026.09.1",
+      "max_results": 4,
+      "required_scopes": ["rag:read"],
+      "attestation_slo_seconds": 60
+    },
+    {
+      "tenant_id": "22222222-2222-2222-2222-222222222222",
+      "policy_version": "acme/2026.09.1",
+      "max_results": 4,
+      "required_scopes": ["rag:read"],
+      "attestation_slo_seconds": 60
+    }
+  ]
+}

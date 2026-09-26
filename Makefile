@@ -1,4 +1,4 @@
-.PHONY: install test lint run up down measure-live benchmark
+.PHONY: install test lint run up down measure-live benchmark verify-release
 
 PYTHON ?= python3
 
@@ -26,3 +26,7 @@ measure-live:
 
 benchmark:
 	$(PYTHON) scripts/fault_injection_benchmark.py --output artifacts/fault_injection_scorecard.json
+
+verify-release:
+	@test -n "$(URL)" || (echo "Usage: make verify-release URL=https://candidate-service.run.app" && exit 1)
+	$(PYTHON) -m tenantvault.release_verifier --url "$(URL)" --output artifacts/release_gate.json

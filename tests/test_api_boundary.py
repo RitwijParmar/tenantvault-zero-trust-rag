@@ -55,3 +55,16 @@ def test_api_adds_browser_security_headers_and_prevents_api_caching() -> None:
     assert response.headers["x-content-type-options"] == "nosniff"
     assert response.headers["x-frame-options"] == "DENY"
     assert response.headers["cache-control"] == "no-store"
+
+
+def test_api_runs_signed_tenant_attestation_and_exposes_only_own_control_status() -> None:
+    client = TestClient(app)
+    response = client.post("/v1/attestations/run", headers={"Authorization": f"Bearer {token(client)}"})
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "passed"
+    assert response.json()["signature"]
+    status_response = client.get("/v1/control-plane/status", headers={"Authorization": f"Bearer {token(client)}"})
+    assert status_response.status_code == 200
+    assert status_response.json()["workspace_state"] == "active"
+    assert status_response.json()["policy_version"] == "northstar/2026.09.1"

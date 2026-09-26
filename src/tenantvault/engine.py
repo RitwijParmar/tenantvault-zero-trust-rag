@@ -4,6 +4,7 @@ import hashlib
 from typing import Any
 from uuid import UUID, uuid4
 
+from .control_plane import IsolationControlPlane
 from .embeddings import HashingEmbedder
 from .models import IngestRequest, IsolationReceipt, QueryRequest
 from .security import Principal
@@ -14,12 +15,15 @@ NORTHSTAR_TENANT = UUID("11111111-1111-1111-1111-111111111111")
 
 
 class TenantVaultEngine:
-    def __init__(self, store: RagStore, receipt_secret: str) -> None:
+    def __init__(self, store: RagStore, receipt_secret: str, control_plane: IsolationControlPlane | None = None) -> None:
         self.store = store
         self.embedder = HashingEmbedder()
         self._receipt_secret = receipt_secret
+        self.control_plane = control_plane
 
     def ingest(self, principal: Principal, request: IngestRequest, request_id: UUID | None = None) -> dict[str, Any]:
+        if self.control_plane:
+            self.control_plane.authorize(principal)
         request_id = request_id or uuid4()
         document = self.store.ingest(
             principal,
@@ -44,6 +48,8 @@ class TenantVaultEngine:
         }
 
     def query(self, principal: Principal, request: QueryRequest, request_id: UUID | None = None) -> dict[str, Any]:
+        if self.control_plane:
+            self.control_plane.authorize(principal, request.top_k)
         request_id = request_id or uuid4()
         hits = self.store.search(principal, self.embedder.embed(request.question), request.top_k)
         event = self.store.append_audit(
@@ -57,7 +63,7 @@ class TenantVaultEngine:
             "request_id": str(request_id),
             "tenant_id": str(principal.tenant_id),
             "actor": principal.subject,
-            "policy_version": POLICY_VERSION,
+            "policy_version": self.control_plane.policy_version(principal) if self.control_plane else POLICY_VERSION,
             "search_space_count": self.store.count_for_tenant(principal),
             "result_document_hashes": [hit.content_sha256 for hit in hits],
             "audit_chain_head": event.event_hash,
@@ -88,3 +94,8 @@ class TenantVaultEngine:
             "assertion": "A cross-tenant canary was not present in this caller's retrieval results.",
             "receipt": probe["isolation_receipt"],
         }
+
+    def attest(self, principal: Principal) -> dict[str, Any]:
+        if not self.control_plane:
+            raise RuntimeError("an isolation control plane is required for attestation")
+        return self.control_plane.attest(principal, lambda: self.isolation_probe(principal))

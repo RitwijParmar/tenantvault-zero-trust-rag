@@ -2,7 +2,7 @@ const state = { tokens: {}, current: "northstar" };
 const el = (id) => document.getElementById(id);
 const walkthrough = [
   { target: "identity", kicker: "OPENING", title: "This is not a tenant filter.", description: "The workspace inherits its tenant from a verified identity. The browser never sends a selectable tenant ID with the query.", script: "Most RAG demos promise tenant filtering. I wanted the tenant boundary to be impossible to choose from the client in the first place." },
-  { target: "scorecard", kicker: "MEASURED RISK", title: "Show the cost of one missing filter.", description: "Across 12 tenants and 576 synthetic documents, a deliberately global vector search selected the foreign canary in all 132 attack paths. TenantVault returned zero foreign sources in those same paths.", script: "I did not want a green test badge to be the proof. I injected the failure we worry about, measured the unsafe baseline, and then showed that the tenant-scoped path returns zero foreign sources." },
+  { target: "control-plane", kicker: "RELEASE GATE", title: "A safe query is not enough.", description: "Before a RAG release moves forward, the control plane verifies the tenant contract, runs an isolation probe, and signs the result. A failure quarantines that tenant workspace.", script: "The important question is not whether the happy path works today. It is whether a policy or deployment change can silently weaken the boundary tomorrow. This is the gate that stops that." },
   { target: "identity-control", kicker: "IDENTITY", title: "The tenant claim arrives signed.", description: "If someone changes a header or slips tenant_id into JSON, the API rejects it. The service trusts only the credential claim.", script: "This is the first important move: the identity tells us who you are and which customer boundary applies. It is not a dropdown the request gets to control." },
   { target: "rls", kicker: "DATABASE", title: "The vector database is the enforcement point.", description: "Each request opens a transaction and sets a local tenant context. PostgreSQL FORCE RLS applies that context to every vector and audit row.", script: "Even if a developer accidentally forgets a WHERE clause, the database still refuses rows outside this tenant. That is the control I would want in a real company." },
   { target: "receipt", kicker: "EVIDENCE", title: "Every answer carries a proof.", description: "The receipt records the tenant, visible corpus size, source hashes, policy revision, and audit-chain head, then signs that exact set.", script: "Instead of asking a customer to trust an AI answer, we hand them an artifact that says exactly what tenant boundary and evidence set produced it." },
@@ -25,6 +25,16 @@ async function request(path, body) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.detail || "Request failed");
   return data;
+}
+async function refreshControlPlane() {
+  const response = await fetch("/v1/control-plane/status", { headers: auth() });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || "Control plane unavailable");
+  el("contract-version").textContent = data.policy_version;
+  el("control-state").textContent = data.workspace_state.toUpperCase();
+  el("control-state").className = data.workspace_state === "active" ? "good-metric" : "danger-metric";
+  el("contract-hash").textContent = short(data.contract_hash, 12);
+  if (data.last_attestation) el("attestation-result").textContent = `Last signed attestation: ${data.last_attestation.status.toUpperCase()} · ${data.last_attestation.elapsed_ms} ms`;
 }
 function renderReceipt(receipt) {
   el("receipt-state").textContent = "SIGNED"; el("receipt-state").className = "status good";
@@ -59,11 +69,13 @@ async function boot() {
   const tokens = await fetch("/api/demo/tokens").then(r => r.json());
   state.tokens = { northstar: tokens.northstar.token, acme: tokens.acme.token };
   setIdentity();
+  await refreshControlPlane();
 }
-el("tenant").addEventListener("change", (event) => { state.current = event.target.value; setIdentity(); el("answer").className = "answer empty"; el("answer").textContent = "Identity changed. The next query receives a new tenant-scoped proof."; el("sources").innerHTML = ""; el("receipt").textContent = "Run a retrieval to mint a signed, tenant-scoped receipt."; el("receipt-state").textContent = "WAITING"; el("receipt-state").className = "status neutral"; });
+el("tenant").addEventListener("change", async (event) => { state.current = event.target.value; setIdentity(); el("answer").className = "answer empty"; el("answer").textContent = "Identity changed. The next query receives a new tenant-scoped proof."; el("sources").innerHTML = ""; el("receipt").textContent = "Run a retrieval to mint a signed, tenant-scoped receipt."; el("receipt-state").textContent = "WAITING"; el("receipt-state").className = "status neutral"; try { await refreshControlPlane(); } catch (error) { el("attestation-result").textContent = error.message; } });
 el("query-form").addEventListener("submit", (event) => { event.preventDefault(); runQuery(el("question").value); });
 document.querySelectorAll("[data-question]").forEach(button => button.addEventListener("click", () => { el("question").value = button.dataset.question; runQuery(button.dataset.question); }));
 el("probe").addEventListener("click", async () => { const result = el("probe-result"); result.className = "probe-result loading"; result.textContent = "Searching with the caller's signed context…"; try { const data = await request("/v1/isolation/probe"); result.className = `probe-result ${data.status}`; result.textContent = data.status === "passed" ? "PASS — no cross-tenant canary entered the retrieval set." : "FAIL — canary was visible. Investigate immediately."; renderReceipt(data.receipt); } catch (error) { result.className = "probe-result failed"; result.textContent = error.message; } });
+el("attest").addEventListener("click", async () => { const result = el("attestation-result"); result.textContent = "Running tenant isolation attestation…"; try { const data = await request("/v1/attestations/run"); result.textContent = `SIGNED ${data.status.toUpperCase()} · ${data.elapsed_ms} ms · policy ${data.policy_version}`; await refreshControlPlane(); } catch (error) { result.textContent = error.message; } });
 function renderGuide() {
   const step = walkthrough[guideIndex];
   document.querySelectorAll(".guide-focus").forEach(node => node.classList.remove("guide-focus"));

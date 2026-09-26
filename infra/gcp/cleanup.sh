@@ -12,6 +12,7 @@ read -r -p "Type DELETE-TENANTVAULT to continue: " confirmation
 [[ "$confirmation" == "DELETE-TENANTVAULT" ]] || { echo "Cancelled."; exit 1; }
 gcloud run services delete "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --quiet || true
 gcloud run jobs delete "${SERVICE}-migrate" --region "$REGION" --project "$PROJECT_ID" --quiet || true
+gcloud run jobs delete "${SERVICE}-verify" --region "$REGION" --project "$PROJECT_ID" --quiet || true
 gcloud sql instances delete "$INSTANCE" --project "$PROJECT_ID" --quiet || true
 gcloud artifacts repositories delete "$REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --quiet || true
 for secret in tenantvault-database-url tenantvault-admin-database-url tenantvault-api-database-password tenantvault-token-signing tenantvault-tenant-key-root tenantvault-receipt-signing; do

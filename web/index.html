@@ -11,33 +11,33 @@
     <div class="ambient one"></div><div class="ambient two"></div>
     <main>
       <header class="topbar">
-        <a class="brand" href="/"><span class="mark">◇</span> TenantVault</a>
-        <div class="topbar-right"><span class="live-dot"></span> Isolation controls active <span class="pill">zt-rag / v1</span><button id="guide-toggle" class="guide-trigger" type="button">Present this demo <span>↗</span></button></div>
+        <a class="brand" href="/"><span class="mark">◇</span> BoundaryLab</a>
+        <div class="topbar-right"><span class="live-dot"></span> Release controls active <span class="pill">policy / attest / gate</span><button id="guide-toggle" class="guide-trigger" type="button">Present this demo <span>↗</span></button></div>
       </header>
 
       <section class="hero">
         <div>
-          <p class="eyebrow">MULTI-TENANT RAG · DATABASE-ENFORCED</p>
-          <h1>Make data boundaries<br /><em>provable.</em></h1>
-          <p class="lede">Ask across your tenant's private knowledge. Every retrieval is fenced by a signed identity, PostgreSQL row-level security, and a verifiable isolation receipt.</p>
+          <p class="eyebrow">CONTINUOUS AUTHORIZATION VERIFICATION FOR RAG</p>
+          <h1>Make RAG releases<br /><em>provable.</em></h1>
+          <p class="lede">BoundaryLab compiles tenant contracts into a zero-trust data plane, then attests that the deployed retrieval path still holds before a release can move forward.</p>
         </div>
         <aside class="trust-card">
-          <div class="trust-title"><span class="shield">✦</span> Retrieval trust chain</div>
+          <div class="trust-title"><span class="shield">✦</span> Release trust chain</div>
           <ol>
-            <li><b>01</b> Verified tenant claim</li>
-            <li><b>02</b> Transaction-local RLS context</li>
+            <li><b>01</b> Reviewed tenant contract</li>
+            <li><b>02</b> Signed identity + transaction RLS</li>
             <li><b>03</b> Tenant-key encrypted sources</li>
-            <li><b>04</b> Signed evidence receipt</li>
+            <li><b>04</b> Signed attestation or quarantine</li>
           </ol>
         </aside>
       </section>
 
-      <section class="evaluation-card" data-guide="scorecard">
-        <div class="evaluation-intro"><p class="eyebrow">ADVERSARIAL EVALUATION · SYNTHETIC LAB</p><h2>Measure the missing-filter failure.</h2><p>Same attack corpus, two retrieval paths. The baseline is intentionally unsafe; TenantVault is tenant-scoped.</p></div>
-        <div class="evaluation-metric unsafe"><b>132 / 132</b><span>foreign canaries selected by a naïve global retriever</span></div>
-        <div class="evaluation-metric safe"><b>0 / 132</b><span>foreign sources returned by TenantVault</span></div>
-        <div class="evaluation-metric proof"><b>132 / 132</b><span>cross-tenant ciphertext replays blocked</span></div>
-        <p class="evaluation-footnote">12 tenants · 576 synthetic documents · deterministic fault injection</p>
+      <section class="evaluation-card" data-guide="control-plane">
+        <div class="evaluation-intro"><p class="eyebrow">POLICY-AS-CODE CONTROL PLANE</p><h2>Attest the candidate, then promote.</h2><p>Every workspace has a reviewed contract. A failed isolation check fail-closes only that tenant instead of silently accepting a risky release.</p></div>
+        <div class="evaluation-metric safe"><b id="contract-version">LOADING</b><span>active tenant policy revision</span></div>
+        <div class="evaluation-metric proof"><b id="control-state">CHECKING</b><span>workspace state: active or quarantined</span></div>
+        <div class="evaluation-metric action"><button id="attest" class="attest-button" type="button">Run signed attestation <span>→</span></button><span id="attestation-result">Checks an out-of-tenant canary and signs the control result.</span></div>
+        <p class="evaluation-footnote">Contract hash <code id="contract-hash">loading…</code> · release gate requires active state + signed attestation</p>
       </section>
 
       <section class="workbench">
@@ -80,7 +80,7 @@
         <div><span>CONTENT</span><b>AES-256-GCM per tenant</b></div>
         <div><span>AUDIT</span><b>Hash-chained receipts</b></div>
       </section>
-      <footer>TenantVault is a security architecture demo. The isolation policy is enforced by the database, not merely promised by the model.</footer>
+      <footer>BoundaryLab is a continuous authorization-verification prototype. TenantVault is its zero-trust RAG data plane.</footer>
     </main>
     <aside id="guide-popup" class="guide-popup" hidden aria-live="polite" aria-label="Presenter walkthrough">
       <div class="guide-progress"><span id="guide-count">01 / 06</span><button id="guide-close" type="button" aria-label="Close walkthrough">×</button></div>

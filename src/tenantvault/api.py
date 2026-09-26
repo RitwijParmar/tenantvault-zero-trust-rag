@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.staticfiles import StaticFiles
 
+from .control_plane import IsolationControlPlane, PolicyCompiler, TenantQuarantinedError
 from .engine import TenantVaultEngine
 from .models import IngestRequest, QueryRequest
 from .security import AuthenticationError, Principal, TenantCipher, TokenAuthority
@@ -23,13 +24,15 @@ authority = TokenAuthority(settings.token_secret)
 
 def build_engine() -> TenantVaultEngine:
     cipher = TenantCipher(settings.tenant_key_root)
+    contracts = PolicyCompiler.from_file(ROOT / "policies" / "tenant-contracts.json")
+    control_plane = IsolationControlPlane(contracts, settings.receipt_secret)
     if settings.store_mode == "postgres":
         if not settings.database_url:
             raise RuntimeError("DATABASE_URL is required when STORE_MODE=postgres")
         store = PostgresRagStore(settings.database_url, cipher)
     else:
         store = MemoryRagStore(cipher)
-    engine = TenantVaultEngine(store, settings.receipt_secret)
+    engine = TenantVaultEngine(store, settings.receipt_secret, control_plane)
     if settings.demo_mode:
         _seed_demo(engine)
     return engine
@@ -116,6 +119,8 @@ def ingest(request: IngestRequest, principal: Principal = Depends(authenticated_
 def query(request: QueryRequest, principal: Principal = Depends(authenticated_principal)) -> dict:
     try:
         return engine.query(principal, request)
+    except TenantQuarantinedError as error:
+        raise HTTPException(status_code=status.HTTP_423_LOCKED, detail=str(error)) from error
     except PermissionError as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
 
@@ -126,6 +131,21 @@ def isolation_probe(principal: Principal = Depends(authenticated_principal)) -> 
         return engine.isolation_probe(principal)
     except PermissionError as error:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@app.post("/v1/attestations/run")
+def run_attestation(principal: Principal = Depends(authenticated_principal)) -> dict:
+    try:
+        return engine.attest(principal)
+    except TenantQuarantinedError as error:
+        raise HTTPException(status_code=status.HTTP_423_LOCKED, detail=str(error)) from error
+    except PermissionError as error:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(error)) from error
+
+
+@app.get("/v1/control-plane/status")
+def control_plane_status(principal: Principal = Depends(authenticated_principal)) -> dict:
+    return engine.control_plane.status_for(principal) if engine.control_plane else {}
 
 
 @app.get("/v1/isolation/status")
